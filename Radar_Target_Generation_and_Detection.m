@@ -1,5 +1,5 @@
 %clear all
-clc;
+%clc;
 
 %% Radar Specifications 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -14,7 +14,9 @@ clc;
 % *%TODO* :
 % define the target's initial position and velocity. Note : Velocity
 % remains contant
- 
+r0 = 50;                              % [m] Initial position in front of RADAR
+v0 = 20;                              % [m/s] Target velocity
+
 
 
 %% FMCW Waveform Generation
@@ -25,9 +27,17 @@ clc;
 % chirp using the requirements above.
 
 
-%Operating carrier frequency of Radar 
-fc= 77e9;             %carrier freq
 
+%Operating carrier frequency of Radar 
+fc= 77e9;                           % [Hz] carrier freq
+c=1e8;                              % [m/s] Speed of light
+wavelength = c / fc;                % [m] 
+range_res = 1;                      % [m] Range resolution
+range_max = 200;                    % [m] Max range
+v_max = 100;                        % [m/s] Max velocity
+Bsweep = c / (2*range_res);         % [Hz] Sweep of chirp
+Tchirp = 5.5 * 2 * range_max / c;   % [s] Chirp time
+slope = Bsweep / Tchirp;            % Slope of chirp
                                                           
 %The number of chirps in one sequence. Its ideal to have 2^ value for the ease of running the FFT
 %for Doppler Estimation. 
@@ -56,21 +66,22 @@ td=zeros(1,length(t));
 
 for i=1:length(t)         
     
-    
     % *%TODO* :
     %For each time stamp update the Range of the Target for constant velocity. 
+    r_t(i) = r0 + v0*t(i);
+    td(i) = 2*r_t(i)/c;
     
     % *%TODO* :
     %For each time sample we need update the transmitted and
     %received signal. 
-    Tx(i) = 
-    Rx (i)  = 
+    Tx(i) = cos(2*pi *(fc * t(i) + slope*t(i)^2 / 2));
+    Rx (i)= cos(2*pi *(fc * (t(i) - td(i)) + slope*(t(i) - td(i))^2 / 2));
     
     % *%TODO* :
     %Now by mixing the Transmit and Receive generate the beat signal
     %This is done by element wise matrix multiplication of Transmit and
     %Receiver Signal
-    Mix(i) = 
+    Mix(i) = Tx(i).*Rx(i);
     
 end
 
